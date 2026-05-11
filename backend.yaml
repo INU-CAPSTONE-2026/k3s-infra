@@ -14,6 +14,10 @@ spec:
       labels:
         app: backend
     spec:
+      # ECR에서 이미지를 가져오기 위한 인증키
+      imagePullSecrets:
+      - name: regcred
+      # --- 여기까지 추가된 부분 ---
       containers:
       - name: backend
         image: 445516435241.dkr.ecr.ap-northeast-2.amazonaws.com/prod-app:latest
@@ -33,4 +37,3 @@ spec:
       targetPort: 8080
       nodePort: 32001
   type: NodePort
-
