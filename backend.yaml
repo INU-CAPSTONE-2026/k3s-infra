@@ -1,35 +1,36 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx
+  name: backend
   labels:
-    app: nginx
+    app: backend
 spec:
-  replicas: 2          
+  replicas: 1
   selector:
     matchLabels:
-      app: nginx
+      app: backend
   template:
     metadata:
       labels:
-        app: nginx
+        app: backend
     spec:
       containers:
-      - name: nginx
-        image: nginx:latest
+      - name: backend
+        image: 445516435241.dkr.ecr.ap-northeast-2.amazonaws.com/prod-app:latest
         ports:
-        - containerPort: 80
+        - containerPort: 8080
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx-service
+  name: backend-service
 spec:
   selector:
-    app: nginx
+    app: backend
   ports:
     - protocol: TCP
-      port: 80          
-      targetPort: 80   
-      nodePort: 32000   
-  type: NodePort       
+      port: 8080
+      targetPort: 8080
+      nodePort: 32001
+  type: NodePort
+
