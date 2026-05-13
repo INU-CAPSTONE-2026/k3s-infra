@@ -1,0 +1,100 @@
+loki:
+  auth_enabled: false
+
+  commonConfig:
+    replication_factor: 1
+
+  rulerConfig:
+    storage:
+      type: local
+      local:
+        directory: /tmp/rules
+
+  schemaConfig:
+    configs:
+      - from: "2024-01-01"
+        store: tsdb
+        object_store: s3
+        schema: v13
+        index:
+          prefix: index_
+          period: 24h
+
+  storage:
+    type: s3
+    bucketNames:
+      chunks: k3s-loki-storage
+      ruler: k3s-loki-storage
+      admin: k3s-loki-storage
+    s3:
+      region: ap-northeast-2
+      s3forcepathstyle: true
+
+# DNS 오류(k3s DNS 서버 명시)
+gateway:
+  nginxConfig:
+    resolver: "10.43.0.10 valid=5s ipv6=off"
+
+# 자원 부족으로 인한 조정
+
+# 1. 컴포넌트 개수 축소 + extraEnv 적용
+read:
+  replicas: 1
+  extraEnv:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: loki-s3-secret
+          key: access_key_id
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: loki-s3-secret
+          key: secret_access_key
+
+write:
+  replicas: 1
+  extraEnv:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: loki-s3-secret
+          key: access_key_id
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: loki-s3-secret
+          key: secret_access_key
+
+backend:
+  replicas: 1
+  extraEnv:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: loki-s3-secret
+          key: access_key_id
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: loki-s3-secret
+          key: secret_access_key
+
+# 2. 메모리 캐시 축소
+chunksCache:
+  allocatedMemory: 256
+  resources:
+    requests:
+      memory: 300Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+
+resultsCache:
+  allocatedMemory: 256
+  resources:
+    requests:
+      memory: 300Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
