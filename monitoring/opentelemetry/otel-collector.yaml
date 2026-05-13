@@ -1,0 +1,55 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-collector
+  namespace: monitoring
+spec:
+  mode: daemonset
+  volumeMounts:
+    - mountPath: /var/log
+      name: varlog
+      readOnly: true
+  volumes:
+    - hostPath:
+        path: /var/log
+      name: varlog
+  config:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+      filelog:
+        include:
+          - /var/log/pods/*/*/*.log
+        exclude:
+          - /var/log/pods/monitoring_otel-collector*/*/*.log
+        start_at: end
+        include_file_path: true
+
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 15
+      batch:
+        send_batch_size: 1000
+        send_batch_max_size: 1500
+        timeout: 5s
+      resourcedetection:
+        detectors: [env, system]
+
+    exporters:
+      otlphttp/loki:
+        endpoint: http://loki-gateway.monitoring.svc.cluster.local/otlp
+        tls:
+          insecure: true
+
+    service:
+      pipelines:
+        logs:
+          receivers: [otlp, filelog]
+          processors: [memory_limiter, batch, resourcedetection]
+          exporters: [otlphttp/loki]
