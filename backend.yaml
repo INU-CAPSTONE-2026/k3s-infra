@@ -20,7 +20,7 @@ spec:
       # --- 여기까지 추가된 부분 ---
       containers:
       - name: backend
-        image: 445516435241.dkr.ecr.ap-northeast-2.amazonaws.com/prod-app:latest
+        image: 445516435241.dkr.ecr.ap-northeast-2.amazonaws.com/prod-app:98f4e5a1
         ports:
         - containerPort: 8080
 ---
