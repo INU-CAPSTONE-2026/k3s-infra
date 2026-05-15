@@ -17,12 +17,6 @@ mimir:
     ingester:
       ring:
         replication_factor: 1
-    # OTel resource attribute를 메트릭 레이블로 승격
-    limits:
-      # host.name 등 resource attribute를 메트릭 레이블로 변환
-      # 미설정 시 host_name="local-db" 같은 레이블이 메트릭에 붙지 않음
-      promote_otel_resource_attributes: "host.name, os.type, service.name, service.instance.id"
-      otel_keep_identifying_resource_attributes: true
 
 # 모든 Pod에 Secret 명시적으로 주입
 global:
