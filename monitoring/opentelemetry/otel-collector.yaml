@@ -9,10 +9,18 @@ spec:
     - mountPath: /var/log
       name: varlog
       readOnly: true
+    # [추가] hostmetrics 수집을 위한 노드 파일시스템 마운트
+    - mountPath: /hostfs
+      name: hostfs
+      readOnly: true
   volumes:
     - hostPath:
         path: /var/log
       name: varlog
+    # [추가] hostmetrics 수집을 위한 노드 파일시스템
+    - hostPath:
+        path: /
+      name: hostfs
   config:
     receivers:
       otlp:
@@ -28,6 +36,16 @@ spec:
           - /var/log/pods/monitoring_otel-collector*/*/*.log
         start_at: end
         include_file_path: true
+      # [추가] 노드 인프라 메트릭 수집
+      hostmetrics:
+        root_path: /hostfs
+        collection_interval: 10s
+        scrapers:
+          cpu: {}
+          memory: {}
+          load: {}
+          disk: {}
+          network: {}
 
     processors:
       memory_limiter:
@@ -46,6 +64,13 @@ spec:
         endpoint: http://loki-gateway.monitoring.svc.cluster.local/otlp
         tls:
           insecure: true
+      # [추가] Mimir로 메트릭 전송
+      prometheusremotewrite:
+        endpoint: http://mimir-gateway.monitoring.svc:80/api/v1/push
+        tls:
+          insecure: true
+        resource_to_telemetry_conversion:
+          enabled: true
 
     service:
       pipelines:
@@ -53,3 +78,8 @@ spec:
           receivers: [otlp, filelog]
           processors: [memory_limiter, batch, resourcedetection]
           exporters: [otlphttp/loki]
+        # [추가] 메트릭 수집 파이프라인
+        metrics:
+          receivers: [otlp, hostmetrics]
+          processors: [memory_limiter, batch, resourcedetection]
+          exporters: [prometheusremotewrite]
