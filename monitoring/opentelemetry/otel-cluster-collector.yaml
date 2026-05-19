@@ -1,0 +1,60 @@
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: otel-collector-cluster
+  namespace: monitoring
+spec:
+  mode: deployment
+  replicas: 1
+  config:
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+            # kube-state-metrics: k8s 클러스터 상태 메트릭 수집
+            # (노드 Ready/NotReady, Pod 상태, Deployment Replicas 등)
+            - job_name: kube-state-metrics
+              static_configs:
+                - targets:
+                    - kube-state-metrics.monitoring.svc.cluster.local:8080
+
+            # mimir-ingester: Mimir의 S3 업로드 메트릭 수집
+            # (DR Dashboard의 S3 백업 상태 패널에서 사용)
+            - job_name: mimir-ingester
+              static_configs:
+                - targets:
+                    - mimir-ingester.monitoring.svc.cluster.local:8080
+
+            # loki-backend: Loki의 S3 업로드 메트릭 수집
+            # (로그 데이터의 S3 백업 상태 모니터링)
+            - job_name: loki-backend
+              static_configs:
+                - targets:
+                    - loki-backend.monitoring.svc.cluster.local:3100
+
+            - job_name: loki-write
+              static_configs:
+                - targets:
+                    - loki-write.monitoring.svc.cluster.local:3100
+
+    processors:
+      # batch: 메트릭을 모아서 한꺼번에 전송 (네트워크 효율화)
+      batch:
+        send_batch_size: 1000
+        timeout: 5s
+
+    exporters:
+      # prometheusremotewrite: 수집한 메트릭을 Mimir로 전송
+      prometheusremotewrite:
+        endpoint: http://mimir-gateway.monitoring.svc:80/api/v1/push
+        tls:
+          insecure: true
+        resource_to_telemetry_conversion:
+          enabled: true
+
+    service:
+      pipelines:
+        metrics:
+          receivers: [prometheus]
+          processors: [batch]
+          exporters: [prometheusremotewrite]
