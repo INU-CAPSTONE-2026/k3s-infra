@@ -5,6 +5,17 @@ metadata:
   namespace: monitoring
 spec:
   mode: daemonset
+  env:
+    - name: AWS_ACCESS_KEY_ID
+      valueFrom:
+        secretKeyRef:
+          name: aws-kinesis-secret
+          key: access_key_id
+    - name: AWS_SECRET_ACCESS_KEY
+      valueFrom:
+        secretKeyRef:
+          name: aws-kinesis-secret
+          key: secret_access_key
   volumeMounts:
     - mountPath: /var/log
       name: varlog
@@ -60,6 +71,12 @@ spec:
         detectors: [env, system]
 
     exporters:
+      awskinesis:
+        stream_name: prod-db-log-stream
+        region: ap-northeast-2
+        aws:
+          access_key: ${env:AWS_ACCESS_KEY_ID}
+          secret_key: ${env:AWS_SECRET_ACCESS_KEY}
       otlphttp/loki:
         endpoint: http://loki-gateway.monitoring.svc.cluster.local/otlp
         tls:
@@ -77,7 +94,7 @@ spec:
         logs:
           receivers: [otlp, filelog]
           processors: [memory_limiter, batch, resourcedetection]
-          exporters: [otlphttp/loki]
+          exporters: [otlphttp/loki, awskinesis]
         # [추가] 메트릭 수집 파이프라인
         metrics:
           receivers: [otlp, hostmetrics]
