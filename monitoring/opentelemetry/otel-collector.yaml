@@ -6,6 +6,10 @@ metadata:
 spec:
   mode: daemonset
   env:
+    - name: K8S_NODE_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: spec.nodeName
     - name: AWS_ACCESS_KEY_ID
       valueFrom:
         secretKeyRef:
@@ -69,6 +73,11 @@ spec:
         timeout: 5s
       resourcedetection:
         detectors: [env, system]
+      resource:
+        attributes:
+          - key: host.name
+            value: "${K8S_NODE_NAME}"
+            action: upsert
 
     exporters:
       awskinesis:
