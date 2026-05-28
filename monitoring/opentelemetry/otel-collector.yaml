@@ -83,7 +83,6 @@ spec:
       awskinesis:
         aws:
           region: ap-northeast-2
-        kinesis:
           stream_name: prod-db-log-stream
       otlphttp/loki:
         endpoint: http://loki-gateway.monitoring.svc.cluster.local/otlp
