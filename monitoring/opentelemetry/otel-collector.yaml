@@ -81,11 +81,10 @@ spec:
 
     exporters:
       awskinesis:
-        stream_name: prod-db-log-stream
-        region: ap-northeast-2
         aws:
-          access_key: ${env:AWS_ACCESS_KEY_ID}
-          secret_key: ${env:AWS_SECRET_ACCESS_KEY}
+          region: ap-northeast-2
+        kinesis:
+          stream_name: prod-db-log-stream
       otlphttp/loki:
         endpoint: http://loki-gateway.monitoring.svc.cluster.local/otlp
         tls:
