@@ -18,7 +18,7 @@ spec:
       - name: regcred
       containers:
       - name: backend
-        image: 445516435241.dkr.ecr.ap-northeast-2.amazonaws.com/prod-app:5f01807c
+        image: 445516435241.dkr.ecr.ap-northeast-2.amazonaws.com/prod-app:4bb05ba0
         ports:
         - containerPort: 8080
         env:
